@@ -3,7 +3,7 @@
 A Docker Sandboxes (`sbx`) kit that runs Claude Code on a **private clone** of any Node project, npm or pnpm, with the right Node version and the dependencies already installed, and Zed connected over SSH.
 
 ```
-git+https://github.com/bpetetot/sbx-kits#ref=node-kit-v0.1.0&dir=node-kit
+git+https://github.com/bpetetot/sbx-kits#ref=main&dir=node-kit
 ```
 
 The kit stops at dependency installation: no `docker compose up`, no databases, no browsers.
@@ -37,7 +37,7 @@ Copy this file to `~/.sbxenv.yaml`, then run `sbx env run` from any project dire
 schemaVersion: "1"
 agent: node-kit
 kits:
-  - git+https://github.com/bpetetot/sbx-kits#ref=node-kit-v0.1.0&dir=node-kit
+  - git+https://github.com/bpetetot/sbx-kits#ref=main&dir=node-kit
   # Optional: your personal Claude Code configuration, see "Personal configuration"
   # - git+ssh://git@github.com/<you>/dotfiles#dir=sbx-kit
 workspace:
@@ -52,7 +52,7 @@ workspace:
 Put this in your `~/.zshrc` or `~/.bashrc`, then run `sbxn` from any project directory. An alias is not enough: `--kit` is rejected once the sandbox exists, so the function reattaches instead.
 
 ```sh
-SBXN_KIT='git+https://github.com/bpetetot/sbx-kits#ref=node-kit-v0.1.0&dir=node-kit'
+SBXN_KIT='git+https://github.com/bpetetot/sbx-kits#ref=main&dir=node-kit'
 SBXN_MIXIN='git+ssh://git@github.com/<you>/dotfiles#dir=sbx-kit'
 sbxn() {
   local name
@@ -204,7 +204,7 @@ sbx run --name nk-dev --clone /abs/path/to/sbx-kits/node-kit .
 
 Kits are frozen at creation: after each change, `sbx rm nk-dev` and create again.
 
-**Releasing.** The `version:` in `spec.yaml` and the Git tag move together: bump `version: "X.Y.Z"`, commit, tag `node-kit-vX.Y.Z`, push the tag, then update the `#ref=` in the recipes.
+**Updating.** The recipes track `main`, and a kit is resolved when a sandbox is created: an existing sandbox keeps the version it was created with until you remove and create it again.
 
 ## Numbers
 
