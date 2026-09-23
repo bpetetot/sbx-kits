@@ -30,14 +30,23 @@ if [ -z "$plugins" ]; then
   exit 0
 fi
 
-if grep -q '@claude-plugins-official$' <<<"$plugins"; then
-  claude plugin marketplace add anthropics/claude-plugins-official
-fi
-
-failed=()
-while read -r plugin; do
-  claude plugin install "$plugin" || failed+=("$plugin")
-done <<<"$plugins"
+# Claude Code may be cloning the official marketplace at the same time on its
+# first launch, so failed installs are retried after the clone settles.
+mapfile -t pending <<<"$plugins"
+for delay in 2 4 8 16 0; do
+  failed=()
+  for plugin in "${pending[@]}"; do
+    claude plugin install "$plugin" || failed+=("$plugin")
+  done
+  [ ${#failed[@]} -eq 0 ] || [ "$delay" -eq 0 ] && break
+  if printf '%s\n' "${failed[@]}" | grep -q '@claude-plugins-official$'; then
+    claude plugin marketplace add anthropics/claude-plugins-official ||
+      echo "node-kit: marketplace add failed, retrying anyway"
+  fi
+  echo "node-kit: retrying ${failed[*]} in ${delay}s"
+  sleep "$delay"
+  pending=("${failed[@]}")
+done
 
 if [ ${#failed[@]} -gt 0 ]; then
   report failed "claude plugin install ${failed[*]}"
