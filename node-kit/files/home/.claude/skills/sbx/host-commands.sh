@@ -12,6 +12,31 @@ loopback='^(127\.[0-9.]*|\[::1\]|localhost) '
 reachable="$(grep -Ev "$loopback" <<<"$listeners" | cut -d' ' -f2 | sort -un)"
 local_only="$(grep -E "$loopback" <<<"$listeners" | cut -d' ' -f2 | sort -un | grep -vxF "${reachable:-none}")"
 
+summary() {
+  [ -f "$1" ] || { echo "not started yet"; return; }
+  echo "$(sed -n 's/^status: //p' "$1"): $(sed -n 's/^step: //p' "$1")"
+}
+
+failure_log() {
+  grep -qx 'status: failed' "$2" 2>/dev/null || return
+  local log
+  log="$(sed -n 's/^log: //p' "$2")"
+  echo
+  echo "$1 failed, last lines of \`$log\`:"
+  echo
+  echo '```text'
+  tail -n 10 "$log" 2>/dev/null
+  echo '```'
+}
+
+status_file="$HOME/.node-kit/status"
+plugins_file="$HOME/.node-kit/plugins.status"
+
+echo "**Bootstrap** $(summary "$status_file") · **Plugins** $(summary "$plugins_file")"
+failure_log Bootstrap "$status_file"
+failure_log Plugins "$plugins_file"
+echo
+
 cat <<OUT
 **Sandbox** \`$name\` on branch \`${branch:-?}\`, to run **on the host**.
 

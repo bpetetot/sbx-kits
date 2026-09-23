@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Usage: sbx-new [kit] [sbx run args...], from the project directory. The kit defaults to node-kit.
+set -euo pipefail
+
+root="$(dirname "$(readlink -f "$0")")"
+kit=node-kit
+if [ $# -gt 0 ] && [ "${1#-}" = "$1" ]; then
+  kit="$1"
+  shift
+fi
+if [ ! -f "$root/$kit/spec.yaml" ]; then
+  echo "sbx-new: no kit named $kit" >&2
+  echo "available: $(cd "$root" && ls -d */spec.yaml | xargs -n1 dirname | xargs)" >&2
+  exit 1
+fi
+
+mixin="$root/.personal-mixin"
+src="$HOME/.claude"
+dest="$mixin/files/home/.claude"
+rm -rf "$mixin"
+mkdir -p "$dest"
+cat > "$mixin/spec.yaml" <<'SPEC'
+schemaVersion: "2"
+kind: mixin
+name: personal
+version: "0.1.0"
+description: Personal Claude Code configuration copied from ~/.claude
+SPEC
+if [ -f "$src/CLAUDE.md" ]; then cp -L "$src/CLAUDE.md" "$dest/user-claude.md"; fi
+if [ -f "$src/settings.json" ]; then cp -L "$src/settings.json" "$dest/sbx-settings.json"; fi
+if [ -d "$src/skills" ]; then cp -RL "$src/skills" "$dest/skills"; fi
+for f in "$src"/*.sh; do
+  if [ -f "$f" ]; then cp -L "$f" "$dest/"; fi
+done
+
+exec sbx run --clone "$root/$kit" --kit "$mixin" "$@" .

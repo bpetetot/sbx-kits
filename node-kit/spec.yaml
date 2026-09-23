@@ -9,7 +9,7 @@ extends: claude
 
 args:
   node:
-    default: "22"
+    default: "26"
     description: Node version used when the project pins none
 
 sandbox:
@@ -27,7 +27,6 @@ environment:
 
 setup:
   install:
-    # node 26 links against libatomic, which the base image does not ship.
     - description: Install the shared libraries recent Node builds need
       command: |
         set -eu
@@ -59,7 +58,6 @@ setup:
         echo 'export PATH="/home/agent/.local/share/mise/shims:$PATH"' >> /etc/sandbox-persistent.sh
 
   files:
-    # Written after files/home, so a personal mixin cannot drop the workflow.
     - description: Sandbox workflow instructions for the agent
       path: /home/agent/.claude/CLAUDE.md
       content: |
@@ -87,11 +85,11 @@ setup:
       content: ""
 
   startup:
-    - description: Install the Node toolchain and the project dependencies
-      command: ["bash", "/home/agent/.local/bin/node-bootstrap.sh"]
-      user: "1000"
-      background: true
     - description: Install the Claude Code plugins enabled in the settings
       command: ["bash", "/home/agent/.local/bin/claude-plugins.sh"]
+      user: "1000"
+      background: true
+    - description: Install the Node toolchain and the project dependencies
+      command: ["bash", "/home/agent/.local/bin/node-bootstrap.sh"]
       user: "1000"
       background: true
