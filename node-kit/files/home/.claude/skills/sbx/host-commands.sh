@@ -55,9 +55,9 @@ ssh $name.sbx
 ### Recover the work
 
 \`\`\`sh
-cd "$dir"
 git fetch sandbox-$name
 git switch ${branch:-<branch>}
+git push -u origin ${branch:-<branch>}
 \`\`\`
 
 ### Ports
