@@ -56,6 +56,17 @@ setup:
       command: |
         set -eu
         echo 'export PATH="/home/agent/.local/share/mise/shims:$PATH"' >> /etc/sandbox-persistent.sh
+    - description: Point to /sbx in the Claude Code startup banner
+      command: |
+        set -eu
+        mkdir -p /etc/claude-code/managed-settings.d
+        cat > /etc/claude-code/managed-settings.d/node-kit.json <<'JSON'
+        {
+          "companyAnnouncements": [
+            "Type /sbx for the bootstrap status and host commands (Zed, ports, fetch your work)."
+          ]
+        }
+        JSON
 
   files:
     - description: Sandbox workflow instructions for the agent

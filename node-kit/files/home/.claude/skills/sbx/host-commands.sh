@@ -87,18 +87,3 @@ if [ -n "$reachable" ]; then
   echo
   echo "If a host port is taken, publish with \`--publish <port>\` and read the assigned one with \`sbx ports $name\`. Undo with \`--unpublish <host>:<port>\`."
 fi
-
-cat <<OUT
-
-### Stop or remove
-
-\`\`\`sh
-sbx stop $name
-\`\`\`
-
-> **Fetch first.** \`sbx rm\` destroys the clone, and commits never fetched are lost.
-
-\`\`\`sh
-sbx rm $name
-\`\`\`
-OUT
