@@ -96,11 +96,11 @@ setup:
       content: ""
 
   startup:
-    - description: Install the Claude Code plugins enabled in the settings
-      command: ["bash", "/home/agent/.local/bin/claude-plugins.sh"]
-      user: "1000"
-      background: true
     - description: Install the Node toolchain and the project dependencies
       command: ["bash", "/home/agent/.local/bin/node-bootstrap.sh"]
+      user: "1000"
+      background: true
+    - description: Install the Claude Code plugins enabled in the settings
+      command: ["bash", "/home/agent/.local/bin/claude-plugins.sh"]
       user: "1000"
       background: true
