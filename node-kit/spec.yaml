@@ -1,0 +1,97 @@
+schemaVersion: "2"
+kind: sandbox
+name: node-kit
+version: "0.1.0"
+displayName: Node Kit
+description: Claude Code sandbox for any Node project, npm or pnpm
+
+extends: claude
+
+args:
+  node:
+    default: "22"
+    description: Node version used when the project pins none
+
+sandbox:
+  command:
+    default: &command
+      - --dangerously-skip-permissions
+      - --settings
+      - /home/agent/.claude/sbx-settings.json
+    interactive: *command
+
+environment:
+  variables:
+    MISE_IDIOMATIC_VERSION_FILE_ENABLE_TOOLS: node
+    COREPACK_ENABLE_DOWNLOAD_PROMPT: "0"
+
+setup:
+  install:
+    # node 26 links against libatomic, which the base image does not ship.
+    - description: Install the shared libraries recent Node builds need
+      command: |
+        set -eu
+        export DEBIAN_FRONTEND=noninteractive
+        apt-get update -qq
+        apt-get install -y -qq --no-install-recommends libatomic1
+        rm -rf /var/lib/apt/lists/*
+    - description: Install mise from a pinned GitHub release
+      command: |
+        set -eu
+        ver=2026.9.12
+        case "$(uname -m)" in
+          aarch64 | arm64) arch=arm64 ;;
+          x86_64 | amd64) arch=x64 ;;
+          *) echo "node-kit: unsupported architecture $(uname -m)" >&2; exit 1 ;;
+        esac
+        base="https://github.com/jdx/mise/releases/download/v${ver}"
+        tmp="$(mktemp -d)"
+        cd "$tmp"
+        curl -fsSL -O "${base}/mise-v${ver}-linux-${arch}.tar.gz"
+        curl -fsSL -O "${base}/SHASUMS256.txt"
+        sha256sum --ignore-missing -c SHASUMS256.txt
+        tar -xzf "mise-v${ver}-linux-${arch}.tar.gz"
+        install -m0755 mise/bin/mise /usr/local/bin/mise
+        rm -rf "$tmp"
+    - description: Put the mise shims on PATH for every shell
+      command: |
+        set -eu
+        echo 'export PATH="/home/agent/.local/share/mise/shims:$PATH"' >> /etc/sandbox-persistent.sh
+
+  files:
+    # Written after files/home, so a personal mixin cannot drop the workflow.
+    - description: Sandbox workflow instructions for the agent
+      path: /home/agent/.claude/CLAUDE.md
+      content: |
+        # Sandbox workflow
+
+        You are running inside a Docker Sandbox, on a private clone of the host
+        repository. The host recovers your work with `git fetch`, so anything you
+        leave uncommitted is lost when the sandbox goes away.
+
+        - Create a branch `sbx/<task-slug>` before your first commit.
+        - Never push. `origin` points at the real GitHub repository of the host,
+          and pushing is not how work leaves this sandbox.
+        - Commit early: only committed history is reachable from the host.
+        - Start every dev server with `--host 0.0.0.0`: a server bound to
+          localhost cannot be reached from the host, even when published.
+        - When the user has to do something on the host (open Zed, a browser,
+          recover the work), invoke `/sbx` to give them the exact commands.
+        - The Node toolchain and dependencies install in the background. If
+          `node` or a dependency is missing, read `~/.node-kit/status`.
+
+        @~/.claude/user-claude.md
+    - description: Placeholder for the instructions a personal mixin may ship
+      path: /home/agent/.claude/user-claude.md
+      onlyIfMissing: true
+      content: ""
+
+  startup:
+    - description: Install the Node toolchain and the project dependencies
+      command: ["bash", "/home/agent/.local/bin/node-bootstrap.sh"]
+      user: "1000"
+      background: true
+    - description: Install the Claude Code plugins enabled in the settings
+      command: ["bash", "/home/agent/.local/bin/claude-plugins.sh"]
+      user: "1000"
+      background: true
