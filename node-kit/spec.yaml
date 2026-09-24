@@ -56,6 +56,11 @@ setup:
       command: |
         set -eu
         echo 'export PATH="/home/agent/.local/share/mise/shims:$PATH"' >> /etc/sandbox-persistent.sh
+    - description: Rewrite GitHub SSH URLs to HTTPS, the only protocol the proxy lets through
+      command: |
+        set -eu
+        git config --system --add url."https://github.com/".insteadOf "git@github.com:"
+        git config --system --add url."https://github.com/".insteadOf "ssh://git@github.com/"
     - description: Point to /sbx in the Claude Code startup banner
       command: |
         set -eu
